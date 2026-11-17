@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TransactionType {
+  DEBIT
+  CREDIT
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+}
+
+model Currency {
+  id     String @id @default(uuid())
+  code   String @unique // e.g. USD, EUR, PKR
+  name   String
+  symbol String
+
+  accounts Account[]
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String
+
+  transactions Transaction[]
+}
+
+model Account {
+  id              String    @id @default(uuid())
+  accountName     String
+  startingBalance Decimal   @db.Decimal(18, 2)
+  currentBalance  Decimal   @db.Decimal(18, 2)
+  active          Boolean   @default(true)
+  deactivatedAt   DateTime?
+  mergedWith      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  currencyId String
+  currency   Currency @relation(fields: [currencyId], references: [id])
+  // you get to see the actual currency object without writing a manual join by include: { currency: true }
+
+  // self-relation: an account can be merged into another account
+  mergedInto Account?  @relation("AccountMerge", fields: [mergedWith], references: [id])
+  mergedFrom Account[] @relation("AccountMerge")
+
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  amount      Decimal         @db.Decimal(18, 2)
+  type        TransactionType
+  description String?
+  time        DateTime        @default(now())
+  createdAt   DateTime        @default(now())
+
+  accountId  String
+  account    Account  @relation(fields: [accountId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@index([accountId])
+  @@index([categoryId])
+}
