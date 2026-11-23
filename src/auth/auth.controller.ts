@@ -16,6 +16,7 @@ import {
   REFRESH_COOKIE,
   refreshCookieOptions,
 } from './refresh-cookie';
+import { Public } from './public.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -24,6 +25,7 @@ export class AuthController {
     private readonly usersService: UsersService,
   ) {}
 
+  @Public()
   @Post()
   async create(
     @Body() createUserDto: CreateUserDto,
@@ -38,6 +40,7 @@ export class AuthController {
     return { user, accessToken };
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(200)
   async refresh(
@@ -54,6 +57,7 @@ export class AuthController {
     return { accessToken };
   }
 
+  @Public()
   @Post('logout')
   @HttpCode(204)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
